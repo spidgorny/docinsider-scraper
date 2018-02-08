@@ -67,6 +67,75 @@ function getCities(page) {
         });
     });
 }
+function scrollDown(page) {
+    return __awaiter(this, void 0, void 0, function () {
+        var i, e_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    i = 0;
+                    _a.label = 1;
+                case 1:
+                    if (!(i < 10)) return [3 /*break*/, 7];
+                    _a.label = 2;
+                case 2:
+                    _a.trys.push([2, 5, , 6]);
+                    console.log('scrollDown', i);
+                    // await Promise.all([
+                    return [4 /*yield*/, page.waitForNavigation({
+                            timeout: 5000,
+                            waitUntil: 'networkidle0'
+                        })];
+                case 3:
+                    // await Promise.all([
+                    _a.sent();
+                    return [4 /*yield*/, page.evaluate(function () {
+                            window.scrollTo(0, document.body.scrollHeight);
+                        })];
+                case 4:
+                    _a.sent();
+                    return [3 /*break*/, 6];
+                case 5:
+                    e_1 = _a.sent();
+                    console.error(e_1);
+                    return [3 /*break*/, 7];
+                case 6:
+                    i++;
+                    return [3 /*break*/, 1];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+function scrollDown2(page) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            console.log('scrollDown');
+            return [2 /*return*/, page.evaluate(function () {
+                    return new Promise(function (resolve, reject) {
+                        function getDocHeight() {
+                            var D = document;
+                            return Math.max(D.body.scrollHeight, D.documentElement.scrollHeight, D.body.offsetHeight, D.documentElement.offsetHeight, D.body.clientHeight, D.documentElement.clientHeight);
+                        }
+                        function scrollWhile(i) {
+                            window.scrollTo(0, document.body.scrollHeight);
+                            setTimeout(function () {
+                                var diff = Math.floor(getDocHeight() - window.scrollY);
+                                console.log(i, getDocHeight(), window.scrollY, diff, window.innerHeight);
+                                if (diff > window.innerHeight && i) {
+                                    scrollWhile(i--);
+                                }
+                                else {
+                                    resolve();
+                                }
+                            }, 1000);
+                        }
+                        scrollWhile(10);
+                    });
+                })];
+        });
+    });
+}
 function getDoctors(page, cityLink) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -77,6 +146,9 @@ function getDoctors(page, cityLink) {
                 case 1:
                     _a.sent();
                     console.log('loaded');
+                    return [4 /*yield*/, scrollDown2(page)];
+                case 2:
+                    _a.sent();
                     return [4 /*yield*/, page.$$eval('div.suchergebnis_boxInstant', function (set) {
                             console.log('set', set.length);
                             var doctors = [];
@@ -104,7 +176,7 @@ function getDoctors(page, cityLink) {
                             console.log('processed', doctors.length);
                             return doctors;
                         })];
-                case 2: return [2 /*return*/, _a.sent()];
+                case 3: return [2 /*return*/, _a.sent()];
             }
         });
     });
@@ -113,7 +185,9 @@ function getDoctors(page, cityLink) {
     var browser, page, berlinZahn, doctors;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, puppeteer.launch()];
+            case 0: return [4 /*yield*/, puppeteer.launch({
+                    headless: false
+                })];
             case 1:
                 browser = _a.sent();
                 return [4 /*yield*/, browser.newPage()];
@@ -122,17 +196,19 @@ function getDoctors(page, cityLink) {
                 berlinZahn = 'http://www.docinsider.de/#/search?q=Zahnarzt&place=Berlin%2C%20Deutschland&lat=52.519171&lng=13.406091199999992&sort=relevance&distance=50';
                 // await page.goto(berlinZahn);
                 page.on('console', function (msg) {
-                    for (var i = 0; i < msg.args.length; ++i)
+                    for (var i = 0; i < msg.args.length; ++i) {
                         console.log(i + ": " + msg.args[i]);
+                    }
                 });
+                page.evaluate(function () { return console.log('hello', 5, { foo: 'bar' }); });
                 return [4 /*yield*/, getDoctors(page, berlinZahn)];
             case 3:
                 doctors = _a.sent();
                 console.log(doctors);
                 // }
+                fs.writeFileSync('data/Zahnarzt-Berlin.json', JSON.stringify(doctors));
                 return [4 /*yield*/, browser.close()];
             case 4:
-                // }
                 _a.sent();
                 return [2 /*return*/];
         }
