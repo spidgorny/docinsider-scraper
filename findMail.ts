@@ -9,7 +9,7 @@ async function getDoctors(page, doc: DocInfo) {
 	await Promise.all([
 		page.click('div#ap_hierklicken'),
 		page.waitForNavigation({
-			timeout: 5000
+			timeout: 10000
 		})
 	]);
 	return await page.$eval('span[itemprop="email"]', (el) => el.innerText.trim());
@@ -21,7 +21,7 @@ function save(filename, data) {
 
 (async () => {
 	const browser = await puppeteer.launch({
-		headless: false,
+		headless: true,
 	});
 	const page = await browser.newPage();
 	await page.setViewport({width: 1280, height: 1024, deviceScaleFactor: 1});
@@ -33,24 +33,29 @@ function save(filename, data) {
 	});
 	page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 
-	let file = 'data/Zahnarzt-Berlin.json';
-	const json = fs.readFileSync(file);
-	const doctors: DocInfo[] = JSON.parse(json.toString());
-	console.log('doctors', doctors.length);
+	try {
+		let file = 'data/Zahnarzt-Berlin.json';
+		const json = fs.readFileSync(file);
+		const doctors: DocInfo[] = JSON.parse(json.toString());
+		console.log('doctors', doctors.length);
 
-	for (let doc of doctors) {
-		console.log('== ', doc.name);
-		if (doc.email) continue;
-		try {
-			let docMail = await getDoctors(page, doc);
-			console.log(docMail);
-			doc.email = docMail;
-			save(file, doctors);
-		} catch (e) {
-			console.error(e);
+		for (let doc of doctors) {
+			console.log('== ', doc.name);
+			if (doc.email) continue;
+			try {
+				let docMail = await getDoctors(page, doc);
+				console.log(docMail);
+				doc.email = docMail;
+				save(file, doctors);
+			} catch (e) {
+				console.error(e);
+			}
 		}
+	} catch (e) {
+		console.error(e);
+	} finally {
+		await browser.close();
 	}
 
-	await browser.close();
 })();
 

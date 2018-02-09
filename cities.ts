@@ -1,6 +1,7 @@
 import * as fs from "fs";
-
 const puppeteer = require('puppeteer');
+const URL = require('url');
+
 
 async function getCities(page) {
 	let cities = {};
@@ -111,31 +112,42 @@ async function getDoctors(page, cityLink) {
 
 (async () => {
 	const browser = await puppeteer.launch({
-		headless: false,
+		headless: true,
 	});
 	const page = await browser.newPage();
-	const berlinZahn = 'http://www.docinsider.de/#/search?q=Zahnarzt&place=Berlin%2C%20Deutschland&lat=52.519171&lng=13.406091199999992&sort=relevance&distance=50';
-	// await page.goto(berlinZahn);
 
 	page.on('console', msg => {
 		for (let i = 0; i < msg.args.length; ++i) {
 			console.log(`${i}: ${msg.args[i]}`);
 		}
 	});
-	page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+	await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 
-	// const cities = await getCities(page);
-	// console.log('cities', cities);
+	// const berlinZahn = 'http://www.docinsider.de/#/search?q=Zahnarzt&place=Berlin%2C%20Deutschland&lat=52.519171&lng=13.406091199999992&sort=relevance&distance=50';
 
-	// for (let city in cities) {
-	// 	console.log('== ', city);
-	// 	let cityLink = cities[city];
-		let doctors = await getDoctors(page, berlinZahn);
-		console.log(doctors);
-	// }
-	fs.writeFileSync('data/Zahnarzt-Berlin.json',
-		JSON.stringify(doctors));
-
-	await browser.close();
+	try {
+		const linkList = fs.readFileSync('data/linkList.txt').toString().split("\n");
+		console.log('linkList', linkList.length);
+		for (let link of linkList) {
+			console.log('== ', link);
+			const url = URL.parse(link.replace('#', ''), true);
+			// console.log(url.query.q, url.query.place);
+			if (url.query.q && url.query.place) {
+				// Berlin, Deutschland
+				const place = url.query.place.split(',')[0];
+				const file = 'data/' + url.query.q + '-' + place + '.json';
+				if (!fs.existsSync(file)) {
+					console.log(file);
+					let doctors = await getDoctors(page, link);
+					console.log('doctors', doctors.length);
+					fs.writeFileSync(file, JSON.stringify(doctors));
+				}
+			}
+		}
+	} catch (e) {
+		console.error(e);
+	} finally {
+		await browser.close();
+	}
 })();
 

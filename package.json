@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "@types/node": "^9.4.0",
-    "puppeteer": "^1.0.0"
+    "csv-stringify": "^2.0.2",
+    "puppeteer": "^1.0.0",
+    "url": "^0.11.0"
   }
 }

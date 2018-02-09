@@ -38,6 +38,7 @@ var _this = this;
 exports.__esModule = true;
 var fs = require("fs");
 var puppeteer = require('puppeteer');
+var URL = require('url');
 function getCities(page) {
     return __awaiter(this, void 0, void 0, function () {
         var cities, json;
@@ -182,35 +183,61 @@ function getDoctors(page, cityLink) {
     });
 }
 (function () { return __awaiter(_this, void 0, void 0, function () {
-    var browser, page, berlinZahn, doctors;
+    var browser, page, linkList, _i, linkList_1, link, url, place, file, doctors, e_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, puppeteer.launch({
-                    headless: false
+                    headless: true
                 })];
             case 1:
                 browser = _a.sent();
                 return [4 /*yield*/, browser.newPage()];
             case 2:
                 page = _a.sent();
-                berlinZahn = 'http://www.docinsider.de/#/search?q=Zahnarzt&place=Berlin%2C%20Deutschland&lat=52.519171&lng=13.406091199999992&sort=relevance&distance=50';
-                // await page.goto(berlinZahn);
                 page.on('console', function (msg) {
                     for (var i = 0; i < msg.args.length; ++i) {
                         console.log(i + ": " + msg.args[i]);
                     }
                 });
-                page.evaluate(function () { return console.log('hello', 5, { foo: 'bar' }); });
-                return [4 /*yield*/, getDoctors(page, berlinZahn)];
+                return [4 /*yield*/, page.evaluate(function () { return console.log('hello', 5, { foo: 'bar' }); })];
             case 3:
-                doctors = _a.sent();
-                console.log(doctors);
-                // }
-                fs.writeFileSync('data/Zahnarzt-Berlin.json', JSON.stringify(doctors));
-                return [4 /*yield*/, browser.close()];
-            case 4:
                 _a.sent();
-                return [2 /*return*/];
+                _a.label = 4;
+            case 4:
+                _a.trys.push([4, 9, 10, 12]);
+                linkList = fs.readFileSync('data/linkList.txt').toString().split("\n");
+                console.log('linkList', linkList.length);
+                _i = 0, linkList_1 = linkList;
+                _a.label = 5;
+            case 5:
+                if (!(_i < linkList_1.length)) return [3 /*break*/, 8];
+                link = linkList_1[_i];
+                console.log('== ', link);
+                url = URL.parse(link.replace('#', ''), true);
+                if (!(url.query.q && url.query.place)) return [3 /*break*/, 7];
+                place = url.query.place.split(',')[0];
+                file = 'data/' + url.query.q + '-' + place + '.json';
+                if (!!fs.existsSync(file)) return [3 /*break*/, 7];
+                console.log(file);
+                return [4 /*yield*/, getDoctors(page, link)];
+            case 6:
+                doctors = _a.sent();
+                console.log('doctors', doctors.length);
+                fs.writeFileSync(file, JSON.stringify(doctors));
+                _a.label = 7;
+            case 7:
+                _i++;
+                return [3 /*break*/, 5];
+            case 8: return [3 /*break*/, 12];
+            case 9:
+                e_2 = _a.sent();
+                console.error(e_2);
+                return [3 /*break*/, 12];
+            case 10: return [4 /*yield*/, browser.close()];
+            case 11:
+                _a.sent();
+                return [7 /*endfinally*/];
+            case 12: return [2 /*return*/];
         }
     });
 }); })();
